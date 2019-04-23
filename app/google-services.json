@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "608993781943",
+    "firebase_url": "https://monitorgea.firebaseio.com",
+    "project_id": "monitorgea",
+    "storage_bucket": "monitorgea.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:608993781943:android:c22d7377758dc306",
+        "android_client_info": {
+          "package_name": "com.udg.monitorgea"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "608993781943-a8cdgp1ti8hg6aeafldkda4967sv4hb5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.udg.monitorgea",
+            "certificate_hash": "6c1981cbd6f3ed8a3d91bad607c6e220dbc89842"
+          }
+        },
+        {
+          "client_id": "608993781943-t2kul2phhairevd3cl29pjb76cf9ch63.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLcedRgp1lGhKPzPwbUGDTh_qeKkolM-I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "608993781943-t2kul2phhairevd3cl29pjb76cf9ch63.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
