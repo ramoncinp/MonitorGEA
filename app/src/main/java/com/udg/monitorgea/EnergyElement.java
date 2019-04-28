@@ -4,6 +4,7 @@ public class EnergyElement
 {
     private String name;
     private Object value = "--";
+    private int totalizer = 0;
     private boolean setting = true;
 
     public EnergyElement()
@@ -38,5 +39,15 @@ public class EnergyElement
     public void setSetting(boolean setting)
     {
         this.setting = setting;
+    }
+
+    public int getTotalizer()
+    {
+        return totalizer;
+    }
+
+    public void setTotalizer(int totalizer)
+    {
+        this.totalizer = totalizer;
     }
 }

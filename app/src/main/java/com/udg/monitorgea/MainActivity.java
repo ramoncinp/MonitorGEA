@@ -104,19 +104,20 @@ public class MainActivity extends AppCompatActivity
     private void parseSensorsData(DataSnapshot dataSnapshot)
     {
         //Obtener valores actuales de sensores
-        Integer gas, elec, agua;
+        Integer gas;
+        Double elec, agua;
 
-        if ((gas = dataSnapshot.child("gas").getValue(Integer.class)) != null)
+        if ((gas = dataSnapshot.child("gas/valor").getValue(Integer.class)) != null)
         {
             energyElements.get(GAS_IDX).setValue(gas);
         }
 
-        if ((elec = dataSnapshot.child("electricidad").getValue(Integer.class)) != null)
+        if ((elec = dataSnapshot.child("electricidad/valor").getValue(Double.class)) != null)
         {
             energyElements.get(ELEC_IDX).setValue(elec);
         }
 
-        if ((agua = dataSnapshot.child("agua").getValue(Integer.class)) != null)
+        if ((agua = dataSnapshot.child("agua/valor").getValue(Double.class)) != null)
         {
             energyElements.get(AGUA_IDX).setValue(agua);
         }

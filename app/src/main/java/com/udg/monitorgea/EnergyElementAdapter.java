@@ -62,7 +62,7 @@ public class EnergyElementAdapter extends RecyclerView.Adapter<EnergyElementAdap
                 break;
 
             case MainActivity.AGUA_IDX:
-                unidades = " L";
+                unidades = " mL/m";
                 resource = R.drawable.water_icon_3;
                 break;
         }
