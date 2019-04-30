@@ -1,5 +1,6 @@
 package com.udg.monitorgea;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -68,10 +69,13 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
-                EnergyElement energyElement = energyElements.get(energyElementsList.getChildAdapterPosition(v));
+                //Obtener tipo
+                int getSensorType = energyElementsList.getChildAdapterPosition(v);
 
-                String message = energyElement.getName() + " seleccionado";
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                //Iniciar Intent
+                Intent intent = new Intent(MainActivity.this, Consumption.class);
+                intent.putExtra(Consumption.SENSOR_TYPE, getSensorType);
+                startActivity(intent);
             }
         });
 
