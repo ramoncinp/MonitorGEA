@@ -344,7 +344,11 @@ public class DatePointer
 
     public int getDateRangeLength()
     {
-        if (dateRangeType == BYWEEK)
+        if (dateRangeType == BYDAY)
+        {
+            return 24;
+        }
+        else if (dateRangeType == BYWEEK)
         {
             return 7;
         }

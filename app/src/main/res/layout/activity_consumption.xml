@@ -84,7 +84,7 @@
                 android:layout_height="match_parent"
                 android:visibility="visible">
 
-                <com.github.mikephil.charting.charts.LineChart
+                <com.github.mikephil.charting.charts.BarChart
                     android:id="@+id/chart"
                     android:layout_width="0dp"
                     android:layout_height="0dp"

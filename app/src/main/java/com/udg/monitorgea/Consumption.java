@@ -12,10 +12,14 @@ import android.widget.TextView;
 
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
+import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -61,7 +65,7 @@ public class Consumption extends AppCompatActivity
     private DatabaseReference sensorRegisters;
 
     //Gráfica
-    private LineChart chart;
+    private BarChart chart;
     private DatePointer datePointer;
 
     @Override
@@ -318,10 +322,10 @@ public class Consumption extends AppCompatActivity
         String startDate = datePointer.getFirstDateOfCurrentPeriodString();
         String finishDate = datePointer.getLastDateOfCurrentPeriodString();
 
-        Log.d(TAG, startDate);
-        Log.d(TAG, finishDate);
+        Log.d(TAG, "Obteniendo consumos de bd");
+        Log.d(TAG, "Fecha Inicial -> " + startDate);
+        Log.d(TAG, "Fecha final -> " + finishDate);
 
-        /*
         //Crear query
         Query query = sensorRegisters.orderByChild("fecha").startAt(datePointer.getFirstDateOfCurrentPeriodEpoch()).endAt(datePointer.getLastDateOfCurrentPeriodEpoch()).limitToLast(7);
         query.addValueEventListener(new ValueEventListener()
@@ -330,6 +334,8 @@ public class Consumption extends AppCompatActivity
             public void onDataChange(@NonNull DataSnapshot dataSnapshot)
             {
                 parseData(dataSnapshot);
+                Log.d(TAG, "Resultado de Query:");
+                Log.d(TAG, dataSnapshot.toString());
             }
 
             @Override
@@ -337,7 +343,7 @@ public class Consumption extends AppCompatActivity
             {
                 Log.e(TAG, databaseError.getMessage() + "\n" + databaseError.getDetails());
             }
-        });*/
+        });
     }
 
     private void parseData(DataSnapshot dataSnapshot)
@@ -362,7 +368,7 @@ public class Consumption extends AppCompatActivity
             try
             {
                 Register register = new Register(value, epoch, child.getKey());
-                registers.add(register);
+                registers.add(0, register);
             }
             catch (NullPointerException e)
             {
@@ -377,8 +383,25 @@ public class Consumption extends AppCompatActivity
 
     private void setChartValues()
     {
+        //Definir eje X
+        final String[] chartXValuesArray;
+        float total = 0;
+
+        if (datePointer.getDateRangeType() == DatePointer.BYDAY)
+        {
+            chartXValuesArray = datePointer.getHoursOfDay();
+        }
+        else if (datePointer.getDateRangeType() == DatePointer.BYWEEK)
+        {
+            chartXValuesArray = datePointer.getDaysOfTheWeek();
+        }
+        else
+        {
+            chartXValuesArray = datePointer.getDaysOfTheMonth();
+        }
+
         //Crear lista de "datasets"
-        List<ILineDataSet> dataSets = new ArrayList<>();
+        List<BarEntry> dataSets = new ArrayList<>();
 
         //Crear objeto de calendario
         Calendar c = Calendar.getInstance();
@@ -387,30 +410,34 @@ public class Consumption extends AppCompatActivity
         c.setTime(new Date());
 
         //Crear lista de "Entries"
-        List<Entry> mRegisters = new ArrayList<>();
+        List<BarEntry> mRegisters = new ArrayList<>();
 
         //Inicializar listas de datos
-        for (int i = 0; i < registers.size(); i++)
+        for (int i = 0; i < datePointer.getDateRangeLength(); i++)
         {
-            if (i == 8) break;
-            Object value = registers.get(i).getValor();
-            mRegisters.add(new Entry(i, Float.parseFloat(value.toString())));
+            mRegisters.add(new BarEntry(i, 0));
+        }
+
+        //Agregar datos obtenidos
+        for (Register register : registers)
+        {
+            addDataToChartColumn(register, mRegisters);
         }
 
         //Crear dataSet del tipo de producto y añadirlo a su lista
-        LineDataSet registersSet = new LineDataSet(mRegisters, "Consumo Gas");
+        BarDataSet registersSet = new BarDataSet(mRegisters, "Consumo Gas");
         registersSet.setColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
-        registersSet.setLineWidth(5);
+        //registersSet.setLineWidth(5);
         registersSet.setValueTextColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
-        registersSet.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
-        dataSets.add(registersSet);
+        //registersSet.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
+        //dataSets.add(registersSet);
 
-        LineData lineData = new LineData(dataSets);
-        lineData.setDrawValues(true);
-        lineData.setValueTextColor(R.color.colorPrimaryDark);
-        lineData.setValueTextSize(10f);
+        BarData data = new BarData(registersSet);
+        data.setBarWidth(0.9f);
+        //data.setDrawValues(true);
+        //data.setValueTextColor(R.color.colorPrimaryDark);
+        //data.setValueTextSize(10f);
 
-        final String[] chartXValuesArray = datePointer.getDaysOfTheWeek();
         ChartTimeAxisFormatter formatter = new ChartTimeAxisFormatter();
         formatter.setFormatData(chartXValuesArray);
 
@@ -426,7 +453,8 @@ public class Consumption extends AppCompatActivity
         YAxis right = chart.getAxisRight();
         right.setEnabled(false);
 
-        chart.setData(lineData);
+        chart.setData(data);
+        chart.setFitBars(true);
 
         Description description = new Description();
         description.setText("");
@@ -434,5 +462,47 @@ public class Consumption extends AppCompatActivity
         chart.setLogEnabled(false);
 
         chart.animateY(ANIMATION_DELAY);
+    }
+
+    private void addDataToChartColumn(Register register, List<BarEntry> registersEntries)
+    {
+        BarEntry entry = null;
+        int listIndex = getRegisterChartIndex(register);
+
+        if (sensorType == MainActivity.GAS_IDX)
+        {
+            entry = registersEntries.get(listIndex);
+
+            //Si no se ha agregado un valor a esa columna, agregar
+            if (entry.getY() == 0)
+                entry.setY(Float.parseFloat(register.getValor().toString()));
+        }
+
+        if (entry == null) return;
+        registersEntries.remove(listIndex);
+        registersEntries.add(listIndex, entry);
+    }
+
+    private int getRegisterChartIndex(Register register)
+    {
+        //Convertir epoch a objeto Date
+        Date registerDate = new Date(register.getFecha() * 1000L);
+
+        //Crear instancia de calendario
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(registerDate);
+
+        if (datePointer.getDateRangeType() == DatePointer.BYDAY)
+        {
+            return calendar.get(Calendar.HOUR_OF_DAY);
+        }
+        else if (datePointer.getDateRangeType() == DatePointer.BYWEEK)
+        {
+            return (calendar.get(Calendar.DAY_OF_WEEK)) - 1;
+        }
+        else
+        {
+            return calendar.get(Calendar.DAY_OF_MONTH);
+        }
     }
 }
