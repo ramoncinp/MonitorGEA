@@ -7,8 +7,9 @@ import java.util.Locale;
 
 public class DatePointer
 {
-    public static int BYWEEK = 0;
-    public static int BYMONTH = 1;
+    static int BYDAY = 0;
+    static int BYWEEK = 1;
+    static int BYMONTH = 2;
 
     private Date firstDayOfCurrentPeriod;
     private Date lastDayOfCurrentPeriod;
@@ -20,7 +21,7 @@ public class DatePointer
 
     public DatePointer()
     {
-        dateRangeType = BYWEEK;
+        dateRangeType = BYDAY;
         calendar = Calendar.getInstance();
         setFirstDayOfCurrentPeriod();
         setLastDayOfCurrentPeriod();
@@ -30,7 +31,16 @@ public class DatePointer
     {
         Date dateToReturn;
 
-        if (dateRangeType == BYWEEK)
+        if (dateRangeType == BYDAY)
+        {
+            //Obtener primera hora del día
+            Calendar date = calendar;
+            date.set(Calendar.HOUR_OF_DAY, 0);
+            date.set(Calendar.MINUTE, 0);
+            date.set(Calendar.SECOND, 0);
+            dateToReturn = date.getTime();
+        }
+        else if (dateRangeType == BYWEEK)
         {
             if (calendar.get(Calendar.DAY_OF_WEEK) == 2) //Si es Lunes...
             {
@@ -63,7 +73,17 @@ public class DatePointer
 
     public void setLastDayOfCurrentPeriod()
     {
-        if (dateRangeType == BYWEEK)
+        if (dateRangeType == BYDAY)
+        {
+            Calendar date = Calendar.getInstance();
+            //Definir primera hora del día
+            date.setTime(calendar.getTime());
+            //Agregar un día
+            date.add(Calendar.DAY_OF_MONTH, 1);
+            //Regresar última hora del día
+            lastDayOfCurrentPeriod = date.getTime();
+        }
+        else if (dateRangeType == BYWEEK)
         {
             Calendar date;
 
@@ -135,7 +155,11 @@ public class DatePointer
 
     public void setOnePeriodBefore()
     {
-        if (dateRangeType == BYWEEK)
+        if (dateRangeType == BYDAY)
+        {
+            calendar.add(Calendar.DAY_OF_MONTH, -1);
+        }
+        else if (dateRangeType == BYWEEK)
         {
             calendar.add(Calendar.WEEK_OF_YEAR, -1);
         }
@@ -149,7 +173,11 @@ public class DatePointer
 
     public void setOnePeriodAfter()
     {
-        if (dateRangeType == BYWEEK)
+        if (dateRangeType == BYDAY)
+        {
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
+        }
+        else if (dateRangeType == BYWEEK)
         {
             calendar.add(Calendar.WEEK_OF_YEAR, 1);
         }
@@ -182,6 +210,29 @@ public class DatePointer
     public int getDateRangeType()
     {
         return dateRangeType;
+    }
+
+    public boolean isSameDay(Date dateToCompare)
+    {
+        int dayNumber;
+        int objectWeekNumber;
+
+        Calendar dayToCompare = Calendar.getInstance();
+        dayToCompare.setTime(dateToCompare);
+        dayNumber = dayToCompare.get(Calendar.DAY_OF_YEAR);
+
+        Calendar firstHourDay = Calendar.getInstance();
+        firstHourDay.setTime(firstDayOfCurrentPeriod);
+        objectWeekNumber = firstHourDay.get(Calendar.DAY_OF_YEAR);
+
+        if (dayNumber == objectWeekNumber)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public boolean isSameWeekNumber(Date dateToCompare)
@@ -244,6 +295,17 @@ public class DatePointer
     public Date getFirstPurchaseDate()
     {
         return firstPurchaseDate;
+    }
+
+    public String[] getHoursOfDay()
+    {
+        String[] hoursOfTheDay = new String[24];
+        for (int i = 0; i < 24; i++)
+        {
+            hoursOfTheDay[i] = String.valueOf(i);
+        }
+
+        return hoursOfTheDay;
     }
 
     public String[] getDaysOfTheWeek()

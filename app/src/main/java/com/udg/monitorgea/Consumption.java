@@ -135,7 +135,20 @@ public class Consumption extends AppCompatActivity
         Date firstPurchaseDate = datePointer.getFirstPurchaseDate();
         StringBuilder dateTitle = new StringBuilder();
 
-        if (datePointer.getDateRangeType() == DatePointer.BYWEEK)
+        if (datePointer.getDateRangeType() == DatePointer.BYDAY)
+        {
+            dateTitle.append(datePointer.getFirstDateOfCurrentPeriodString());
+
+            if (datePointer.isSameDay(new Date())) //Comparar con la semana actual
+            {
+                arrowRight.setVisibility(View.INVISIBLE);
+            }
+            else
+            {
+                arrowRight.setVisibility(View.VISIBLE);
+            }
+        }
+        else if (datePointer.getDateRangeType() == DatePointer.BYWEEK)
         {
             dateTitle.append(datePointer.getFirstDateOfCurrentPeriodString());
             dateTitle.append(" - ");
@@ -206,6 +219,13 @@ public class Consumption extends AppCompatActivity
 
     private void execQuery()
     {
+        String startDate = datePointer.getFirstDateOfCurrentPeriodString();
+        String finishDate = datePointer.getLastDateOfCurrentPeriodString();
+
+        Log.d(TAG, startDate);
+        Log.d(TAG, finishDate);
+
+        /*
         //Crear query
         Query query = sensorRegisters.orderByChild("fecha").startAt(datePointer.getFirstDateOfCurrentPeriodEpoch()).endAt(datePointer.getLastDateOfCurrentPeriodEpoch()).limitToLast(7);
         query.addValueEventListener(new ValueEventListener()
@@ -221,7 +241,7 @@ public class Consumption extends AppCompatActivity
             {
                 Log.e(TAG, databaseError.getMessage() + "\n" + databaseError.getDetails());
             }
-        });
+        });*/
     }
 
     private void parseData(DataSnapshot dataSnapshot)
