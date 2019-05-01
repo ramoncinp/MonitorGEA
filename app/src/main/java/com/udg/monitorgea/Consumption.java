@@ -13,17 +13,12 @@ import android.widget.TextView;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -40,11 +35,12 @@ public class Consumption extends AppCompatActivity
 {
     //Constantes
     private final static String TAG = Consumption.class.getSimpleName();
-    private final static int ANIMATION_DELAY = 800;
+    private final static int ANIMATION_DELAY = 200;
     public final static String SENSOR_TYPE = "sensor";
 
     //Variables
     private int sensorType = MainActivity.GAS_IDX;
+    private float total = 0;
     private String registersName = "";
 
     //Listar
@@ -60,6 +56,7 @@ public class Consumption extends AppCompatActivity
     private LinearLayout content;
     private TextView noRgisters;
     private TextView dateTitleTv;
+    private TextView totalTv;
 
     //Objetos
     private DatabaseReference sensorRegisters;
@@ -116,6 +113,7 @@ public class Consumption extends AppCompatActivity
         monthButton = findViewById(R.id.fabMonth);
         weekButton = findViewById(R.id.fabWeek);
         dayButton = findViewById(R.id.fabDay);
+        totalTv = findViewById(R.id.total);
 
         arrowLeft.setOnClickListener(new View.OnClickListener()
         {
@@ -361,18 +359,14 @@ public class Consumption extends AppCompatActivity
             Object value;
             if (sensorType == MainActivity.GAS_IDX)
                 value = child.child("valor").getValue(Integer.class);
-            else value = child.child("fecha").getValue(Double.class);
+            else value = child.child("valor").getValue(Double.class);
 
             Long epoch = child.child("fecha").getValue(Long.class);
 
-            try
+            if (epoch != null)
             {
                 Register register = new Register(value, epoch, child.getKey());
                 registers.add(0, register);
-            }
-            catch (NullPointerException e)
-            {
-                e.printStackTrace();
             }
         }
 
@@ -385,7 +379,6 @@ public class Consumption extends AppCompatActivity
     {
         //Definir eje X
         final String[] chartXValuesArray;
-        float total = 0;
 
         if (datePointer.getDateRangeType() == DatePointer.BYDAY)
         {
@@ -399,9 +392,6 @@ public class Consumption extends AppCompatActivity
         {
             chartXValuesArray = datePointer.getDaysOfTheMonth();
         }
-
-        //Crear lista de "datasets"
-        List<BarEntry> dataSets = new ArrayList<>();
 
         //Crear objeto de calendario
         Calendar c = Calendar.getInstance();
@@ -427,16 +417,10 @@ public class Consumption extends AppCompatActivity
         //Crear dataSet del tipo de producto y añadirlo a su lista
         BarDataSet registersSet = new BarDataSet(mRegisters, "Consumo Gas");
         registersSet.setColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
-        //registersSet.setLineWidth(5);
         registersSet.setValueTextColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
-        //registersSet.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
-        //dataSets.add(registersSet);
 
         BarData data = new BarData(registersSet);
         data.setBarWidth(0.9f);
-        //data.setDrawValues(true);
-        //data.setValueTextColor(R.color.colorPrimaryDark);
-        //data.setValueTextSize(10f);
 
         ChartTimeAxisFormatter formatter = new ChartTimeAxisFormatter();
         formatter.setFormatData(chartXValuesArray);
@@ -461,26 +445,50 @@ public class Consumption extends AppCompatActivity
         chart.setDescription(description);
         chart.setLogEnabled(false);
 
+        setTotal();
         chart.animateY(ANIMATION_DELAY);
+    }
+
+    private void setTotal()
+    {
+        if (sensorType != MainActivity.GAS_IDX)
+        {
+            String unit = "";
+            if (sensorType == MainActivity.AGUA_IDX) unit = " L";
+            else if (sensorType == MainActivity.ELEC_IDX) unit = " kW/h";
+
+            String text = "Total: " + Constants.DOUBLE_FORMAT.format(total) + unit;
+            totalTv.setVisibility(View.VISIBLE);
+            totalTv.setText(text);
+        }
     }
 
     private void addDataToChartColumn(Register register, List<BarEntry> registersEntries)
     {
-        BarEntry entry = null;
         int listIndex = getRegisterChartIndex(register);
+
+        BarEntry entry = registersEntries.get(listIndex);
+        float lastValue = entry.getY();
 
         if (sensorType == MainActivity.GAS_IDX)
         {
-            entry = registersEntries.get(listIndex);
-
-            //Si no se ha agregado un valor a esa columna, agregar
-            if (entry.getY() == 0)
+            if (lastValue == 0)
+            {
+                //Si no se ha agregado un valor a esa columna, agregar
                 entry.setY(Float.parseFloat(register.getValor().toString()));
+                registersEntries.remove(listIndex);
+                registersEntries.add(listIndex, entry);
+            }
         }
+        else
+        {
+            float value = Float.parseFloat(Constants.DOUBLE_FORMAT.format(register.getValor()));
+            entry.setY(lastValue + value);
+            registersEntries.remove(listIndex);
+            registersEntries.add(listIndex, entry);
 
-        if (entry == null) return;
-        registersEntries.remove(listIndex);
-        registersEntries.add(listIndex, entry);
+            total += value;
+        }
     }
 
     private int getRegisterChartIndex(Register register)

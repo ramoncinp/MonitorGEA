@@ -44,7 +44,6 @@ public class EnergyElementAdapter extends RecyclerView.Adapter<EnergyElementAdap
     {
         EnergyElement energyElement = elements.get(i);
         energyElementViewHolder.name.setText(energyElement.getName());
-        energyElementViewHolder.value.setText(energyElement.getValue().toString());
 
         String unidades = "";
         Integer resource = null;
@@ -52,16 +51,21 @@ public class EnergyElementAdapter extends RecyclerView.Adapter<EnergyElementAdap
         switch (i)
         {
             case MainActivity.GAS_IDX:
+                energyElementViewHolder.value.setText(energyElement.getValue().toString());
                 unidades = "%";
                 resource = R.drawable.gas_icon;
                 break;
 
             case MainActivity.ELEC_IDX:
+                if (energyElement.getValue() != "--") energyElementViewHolder.value.setText(Constants.DOUBLE_FORMAT.format(energyElement.getValue()));
+                else energyElementViewHolder.value.setText(energyElement.getValue().toString());
                 unidades = " kW/h";
                 resource = R.drawable.power_icon;
                 break;
 
             case MainActivity.AGUA_IDX:
+                if (energyElement.getValue() != "--") energyElementViewHolder.value.setText(Constants.DOUBLE_FORMAT.format(energyElement.getValue()));
+                else energyElementViewHolder.value.setText(energyElement.getValue().toString());
                 unidades = " mL/m";
                 resource = R.drawable.water_icon_3;
                 break;
