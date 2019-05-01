@@ -4,11 +4,13 @@ public class Register
 {
     private Object valor;
     private long fecha;
+    private String uuid;
 
-    public Register(Object valor, long fecha)
+    public Register(Object valor, long fecha, String uuid)
     {
         this.valor = valor;
         this.fecha = fecha;
+        this.uuid = uuid;
     }
 
     public Object getValor()
@@ -19,5 +21,10 @@ public class Register
     public long getFecha()
     {
         return fecha;
+    }
+
+    public String getUuid()
+    {
+        return uuid;
     }
 }

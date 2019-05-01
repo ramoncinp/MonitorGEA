@@ -1,11 +1,11 @@
 package com.udg.monitorgea;
 
 import android.support.annotation.NonNull;
-import android.support.constraint.ConstraintLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,12 +23,12 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 public class Consumption extends AppCompatActivity
@@ -46,13 +46,15 @@ public class Consumption extends AppCompatActivity
     private ArrayList<Register> registers;
 
     //Views
-    private ConstraintLayout chartLayout;
     private FloatingActionMenu floatingActionMenu;
     private ImageView arrowLeft;
     private ImageView arrowRight;
     private LinearLayout content;
-    private TextView emptyTv;
+    private TextView noRgisters;
     private TextView dateTitleTv;
+
+    //Objetos
+    private DatabaseReference sensorRegisters;
 
     //Gráfica
     private LineChart chart;
@@ -97,6 +99,97 @@ public class Consumption extends AppCompatActivity
     private void initViews()
     {
         chart = findViewById(R.id.chart);
+        dateTitleTv = findViewById(R.id.registers_date_title);
+        arrowLeft = findViewById(R.id.arrowToLeft);
+        arrowRight = findViewById(R.id.arrowToRight);
+        noRgisters = findViewById(R.id.no_registers);
+        content = findViewById(R.id.registers_content);
+
+        arrowLeft.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                datePointer.setOnePeriodBefore();
+                setDateTitle();
+                execQuery();
+            }
+        });
+
+        arrowRight.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                datePointer.setOnePeriodAfter();
+                setDateTitle();
+                execQuery();
+            }
+        });
+
+        setDateTitle();
+    }
+
+    private void setDateTitle()
+    {
+        Date firstPurchaseDate = datePointer.getFirstPurchaseDate();
+        StringBuilder dateTitle = new StringBuilder();
+
+        if (datePointer.getDateRangeType() == DatePointer.BYWEEK)
+        {
+            dateTitle.append(datePointer.getFirstDateOfCurrentPeriodString());
+            dateTitle.append(" - ");
+            dateTitle.append(datePointer.getLastDateOfCurrentPeriodString());
+
+            if (datePointer.isSameWeekNumber(new Date())) //Comparar con la semana actual
+            {
+                arrowRight.setVisibility(View.INVISIBLE);
+            }
+            else
+            {
+                arrowRight.setVisibility(View.VISIBLE);
+            }
+
+            if (firstPurchaseDate != null)
+            {
+                if (datePointer.isSameWeekNumber(firstPurchaseDate)) //Comparar con la semana del
+                // primer consumo
+                {
+                    arrowLeft.setVisibility(View.INVISIBLE);
+                }
+                else
+                {
+                    arrowLeft.setVisibility(View.VISIBLE);
+                }
+            }
+        }
+        else
+        {
+            dateTitle.append(datePointer.getCurrentMonth());
+            if (datePointer.isSameMonth(new Date())) //Comparar con la semana actual
+            {
+                arrowRight.setVisibility(View.INVISIBLE);
+            }
+            else
+            {
+                arrowRight.setVisibility(View.VISIBLE);
+            }
+
+            if (firstPurchaseDate != null)
+            {
+                if (datePointer.isSameMonth(firstPurchaseDate)) //Comparar con la semana del
+                // primer consumo
+                {
+                    arrowLeft.setVisibility(View.INVISIBLE);
+                }
+                else
+                {
+                    arrowLeft.setVisibility(View.VISIBLE);
+                }
+            }
+        }
+
+        dateTitleTv.setText(dateTitle.toString());
     }
 
     private void initDatabase()
@@ -104,8 +197,18 @@ public class Consumption extends AppCompatActivity
         //Preparar lista
         registers = new ArrayList<>();
 
-        DatabaseReference registers = FirebaseDatabase.getInstance().getReference().child(registersName);
-        registers.addValueEventListener(new ValueEventListener()
+        //Obtener registros
+        sensorRegisters = FirebaseDatabase.getInstance().getReference(registersName);
+
+        //Ejecutar Query
+        execQuery();
+    }
+
+    private void execQuery()
+    {
+        //Crear query
+        Query query = sensorRegisters.orderByChild("fecha").startAt(datePointer.getFirstDateOfCurrentPeriodEpoch()).endAt(datePointer.getLastDateOfCurrentPeriodEpoch()).limitToLast(7);
+        query.addValueEventListener(new ValueEventListener()
         {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot)
@@ -116,14 +219,20 @@ public class Consumption extends AppCompatActivity
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError)
             {
-                Log.d("Datos", "Error al obtener datos", databaseError.toException());
+                Log.e(TAG, databaseError.getMessage() + "\n" + databaseError.getDetails());
             }
         });
     }
 
     private void parseData(DataSnapshot dataSnapshot)
     {
-        Log.d(TAG, dataSnapshot.toString());
+        //Si no hubo registros...
+        if (dataSnapshot.getValue() == null)
+        {
+            noRgisters.setVisibility(View.VISIBLE);
+            content.setVisibility(View.GONE);
+            return;
+        }
 
         for (DataSnapshot child : dataSnapshot.getChildren())
         {
@@ -136,7 +245,7 @@ public class Consumption extends AppCompatActivity
 
             try
             {
-                Register register = new Register(value, epoch);
+                Register register = new Register(value, epoch, child.getKey());
                 registers.add(register);
             }
             catch (NullPointerException e)
@@ -146,6 +255,8 @@ public class Consumption extends AppCompatActivity
         }
 
         setChartValues();
+        noRgisters.setVisibility(View.GONE);
+        content.setVisibility(View.VISIBLE);
     }
 
     private void setChartValues()
@@ -165,7 +276,7 @@ public class Consumption extends AppCompatActivity
         //Inicializar listas de datos
         for (int i = 0; i < registers.size(); i++)
         {
-            if (i == 7) break;
+            if (i == 8) break;
             Object value = registers.get(i).getValor();
             mRegisters.add(new Entry(i, Float.parseFloat(value.toString())));
         }

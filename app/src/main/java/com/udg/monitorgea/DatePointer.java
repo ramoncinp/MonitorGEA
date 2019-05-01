@@ -93,6 +93,16 @@ public class DatePointer
         return lastDayOfCurrentPeriod;
     }
 
+    public long getFirstDateOfCurrentPeriodEpoch()
+    {
+        return firstDayOfCurrentPeriod.getTime() / 1000;
+    }
+
+    public long getLastDateOfCurrentPeriodEpoch()
+    {
+        return lastDayOfCurrentPeriod.getTime() / 1000;
+    }
+
     public String getFirstDateOfCurrentPeriodString()
     {
         return abbreviateDate(firstDayOfCurrentPeriod);
@@ -137,7 +147,7 @@ public class DatePointer
         setLastDayOfCurrentPeriod();
     }
 
-    public void setOnePeriodLater()
+    public void setOnePeriodAfter()
     {
         if (dateRangeType == BYWEEK)
         {
@@ -239,7 +249,6 @@ public class DatePointer
     public String[] getDaysOfTheWeek()
     {
         String[] daysOfTheWeek = new String[]{
-                "",
                 "L ",
                 "M ",
                 "Mi ",
@@ -249,11 +258,11 @@ public class DatePointer
                 "D "
         };
 
-        for (int i = 1; i <= 7; i++)
+        for (int i = 0; i < 7; i++)
         {
             Calendar day = Calendar.getInstance();
             day.setTime(firstDayOfCurrentPeriod);
-            day.add(Calendar.DAY_OF_MONTH, i - 1);
+            day.add(Calendar.DAY_OF_MONTH, i);
             daysOfTheWeek[i] += String.valueOf(day.get(Calendar.DAY_OF_MONTH));
         }
 
@@ -262,12 +271,8 @@ public class DatePointer
 
     public String[] getDaysOfTheMonth()
     {
-        //int numberOfDays = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
-
-        String[] daysOfTheMonth = new String[32];
-        daysOfTheMonth[0] = "";
-
-        for (int i = 1; i <= 31; i++)
+        String[] daysOfTheMonth = new String[31];
+        for (int i = 0; i < 31; i++)
         {
             daysOfTheMonth[i] = String.valueOf(i);
         }
@@ -283,11 +288,8 @@ public class DatePointer
         }
         else
         {
-            Date date = calendar.getTime();
             int max = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
             return max;
         }
     }
-
-
 }
