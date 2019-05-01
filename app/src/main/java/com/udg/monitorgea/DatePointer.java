@@ -192,7 +192,7 @@ public class DatePointer
     public void setDateRangeType(int dateRangeType)
     {
         //Si va de mensual a semanal, analizar...
-        if (this.dateRangeType == DatePointer.BYMONTH && dateRangeType == BYWEEK)
+        /*if (this.dateRangeType == DatePointer.BYMONTH && dateRangeType == BYWEEK)
         {
             if (firstPurchaseDate != null)
             {
@@ -201,7 +201,7 @@ public class DatePointer
                     calendar.setTime(firstPurchaseDate);
                 }
             }
-        }
+        }*/
         this.dateRangeType = dateRangeType;
         setFirstDayOfCurrentPeriod();
         setLastDayOfCurrentPeriod();

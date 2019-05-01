@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
@@ -47,6 +48,9 @@ public class Consumption extends AppCompatActivity
 
     //Views
     private FloatingActionMenu floatingActionMenu;
+    private FloatingActionButton monthButton;
+    private FloatingActionButton weekButton;
+    private FloatingActionButton dayButton;
     private ImageView arrowLeft;
     private ImageView arrowRight;
     private LinearLayout content;
@@ -104,6 +108,10 @@ public class Consumption extends AppCompatActivity
         arrowRight = findViewById(R.id.arrowToRight);
         noRgisters = findViewById(R.id.no_registers);
         content = findViewById(R.id.registers_content);
+        floatingActionMenu = findViewById(R.id.menu_registers_dates);
+        monthButton = findViewById(R.id.fabMonth);
+        weekButton = findViewById(R.id.fabWeek);
+        dayButton = findViewById(R.id.fabDay);
 
         arrowLeft.setOnClickListener(new View.OnClickListener()
         {
@@ -124,6 +132,94 @@ public class Consumption extends AppCompatActivity
                 datePointer.setOnePeriodAfter();
                 setDateTitle();
                 execQuery();
+            }
+        });
+
+        floatingActionMenu.setOnMenuToggleListener(new FloatingActionMenu.OnMenuToggleListener()
+        {
+            @Override
+            public void onMenuToggle(boolean opened)
+            {
+                if (opened)
+                {
+                    int green = getResources().getColor(R.color.green_money);
+                    int darkGreen = getResources().getColor(R.color.dark_green);
+                    int red = getResources().getColor(R.color.colorPrimary);
+                    int darkRed = getResources().getColor(R.color.colorPrimaryDark);
+
+                    if (datePointer.getDateRangeType() == DatePointer.BYDAY)
+                    {
+                        dayButton.setColorNormal(green);
+                        dayButton.setColorPressed(darkGreen);
+                        weekButton.setColorNormal(red);
+                        weekButton.setColorPressed(darkRed);
+                        monthButton.setColorNormal(red);
+                        monthButton.setColorPressed(darkRed);
+                    }
+                    else if (datePointer.getDateRangeType() == DatePointer.BYWEEK)
+                    {
+                        dayButton.setColorNormal(red);
+                        dayButton.setColorPressed(darkRed);
+                        weekButton.setColorNormal(green);
+                        weekButton.setColorPressed(darkGreen);
+                        monthButton.setColorNormal(red);
+                        monthButton.setColorPressed(darkRed);
+                    }
+                    else
+                    {
+                        dayButton.setColorNormal(red);
+                        dayButton.setColorPressed(darkRed);
+                        weekButton.setColorNormal(red);
+                        weekButton.setColorPressed(darkRed);
+                        monthButton.setColorNormal(green);
+                        monthButton.setColorPressed(darkGreen);
+                    }
+                }
+            }
+        });
+
+        dayButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (datePointer.getDateRangeType() != DatePointer.BYDAY)
+                {
+                    datePointer.setDateRangeType(DatePointer.BYDAY);
+                    setDateTitle();
+                    execQuery();
+                }
+                floatingActionMenu.close(true);
+            }
+        });
+
+        weekButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (datePointer.getDateRangeType() != DatePointer.BYWEEK)
+                {
+                    datePointer.setDateRangeType(DatePointer.BYWEEK);
+                    setDateTitle();
+                    execQuery();
+                }
+                floatingActionMenu.close(true);
+            }
+        });
+
+        monthButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (datePointer.getDateRangeType() != DatePointer.BYMONTH)
+                {
+                    datePointer.setDateRangeType(DatePointer.BYMONTH);
+                    setDateTitle();
+                    execQuery();
+                }
+                floatingActionMenu.close(true);
             }
         });
 

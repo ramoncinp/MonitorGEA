@@ -3,4 +3,21 @@
     <color name="colorPrimary">#8bc34a</color>
     <color name="colorPrimaryDark">#689f38</color>
     <color name="colorAccent">#FFFFFF</color>
+
+    <!-- Otros -->
+    <color name="back_red">#8e0000</color>
+    <color name="blue">#2196F3</color>
+    <color name="darkBlue">#1a237e</color>
+    <color name="red">#F44336</color>
+    <color name="lowRed">#FFCDD2</color>
+    <color name="green">#76FF03</color>
+    <color name="green_money">#388E3C</color>
+    <color name="dark_green">#1B5E20</color>
+    <color name="green_ok">#8BC34A</color>
+    <color name="white">#ffffff</color>
+    <color name="gray">#E0E0E0</color>
+    <color name="orange">#FF9800</color>
+    <color name="lightorange">#FFF3E0</color>
+    <color name="lightblack">#212121</color>
+    <color name="black">#000000</color>
 </resources>

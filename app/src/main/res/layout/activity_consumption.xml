@@ -116,7 +116,7 @@
     </LinearLayout>
 
     <com.github.clans.fab.FloatingActionMenu
-        android:id="@+id/menu_purchase_dates"
+        android:id="@+id/menu_registers_dates"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
@@ -131,6 +131,17 @@
         fab:menu_icon="@drawable/ic_date_range"
         fab:menu_labels_ellipsize="end"
         fab:menu_labels_maxLines="2">
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/fabDay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:src="@mipmap/ic_day_time"
+            fab:fab_colorNormal="@color/colorPrimary"
+            fab:fab_colorPressed="@color/colorPrimaryDark"
+            fab:fab_colorRipple="@color/colorAccent"
+            fab:fab_label="Diario"/>
 
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fabWeek"
