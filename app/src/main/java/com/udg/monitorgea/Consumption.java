@@ -8,17 +8,19 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
-import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -40,8 +42,10 @@ public class Consumption extends AppCompatActivity
 
     //Variables
     private int sensorType = MainActivity.GAS_IDX;
-    private float total = 0;
+    private Double total = 0d;
+    private float referenceValue;
     private String registersName = "";
+    private String registersDesc = "";
 
     //Listar
     private ArrayList<Register> registers;
@@ -54,6 +58,7 @@ public class Consumption extends AppCompatActivity
     private ImageView arrowLeft;
     private ImageView arrowRight;
     private LinearLayout content;
+    private ProgressBar progressBar;
     private TextView noRgisters;
     private TextView dateTitleTv;
     private TextView totalTv;
@@ -62,7 +67,7 @@ public class Consumption extends AppCompatActivity
     private DatabaseReference sensorRegisters;
 
     //Gráfica
-    private BarChart chart;
+    private LineChart chart;
     private DatePointer datePointer;
 
     @Override
@@ -82,14 +87,17 @@ public class Consumption extends AppCompatActivity
             {
                 case MainActivity.GAS_IDX:
                     registersName = "gas";
+                    registersDesc = "Nivel gas";
                     break;
 
                 case MainActivity.ELEC_IDX:
                     registersName = "electricidad";
+                    registersDesc = "Consumo electricidad";
                     break;
 
                 case MainActivity.AGUA_IDX:
                     registersName = "agua";
+                    registersDesc = "Consumo agua";
                     break;
             }
         }
@@ -114,6 +122,7 @@ public class Consumption extends AppCompatActivity
         weekButton = findViewById(R.id.fabWeek);
         dayButton = findViewById(R.id.fabDay);
         totalTv = findViewById(R.id.total);
+        progressBar = findViewById(R.id.progress_bar);
 
         arrowLeft.setOnClickListener(new View.OnClickListener()
         {
@@ -317,6 +326,10 @@ public class Consumption extends AppCompatActivity
 
     private void execQuery()
     {
+        noRgisters.setVisibility(View.GONE);
+        content.setVisibility(View.GONE);
+        progressBar.setVisibility(View.VISIBLE);
+
         String startDate = datePointer.getFirstDateOfCurrentPeriodString();
         String finishDate = datePointer.getLastDateOfCurrentPeriodString();
 
@@ -334,12 +347,18 @@ public class Consumption extends AppCompatActivity
                 parseData(dataSnapshot);
                 Log.d(TAG, "Resultado de Query:");
                 Log.d(TAG, dataSnapshot.toString());
+
+                progressBar.setVisibility(View.GONE);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError)
             {
                 Log.e(TAG, databaseError.getMessage() + "\n" + databaseError.getDetails());
+
+                noRgisters.setVisibility(View.VISIBLE);
+                content.setVisibility(View.GONE);
+                progressBar.setVisibility(View.GONE);
             }
         });
     }
@@ -351,8 +370,16 @@ public class Consumption extends AppCompatActivity
         {
             noRgisters.setVisibility(View.VISIBLE);
             content.setVisibility(View.GONE);
+            totalTv.setVisibility(View.GONE);
+
+            total = 0d;
+            referenceValue = 0f;
+
             return;
         }
+
+        //Limpiar lista
+        registers.clear();
 
         for (DataSnapshot child : dataSnapshot.getChildren())
         {
@@ -370,6 +397,7 @@ public class Consumption extends AppCompatActivity
             }
         }
 
+        setTotal();
         setChartValues();
         noRgisters.setVisibility(View.GONE);
         content.setVisibility(View.VISIBLE);
@@ -393,6 +421,9 @@ public class Consumption extends AppCompatActivity
             chartXValuesArray = datePointer.getDaysOfTheMonth();
         }
 
+        //Crear lista de "datasets"
+        List<ILineDataSet> dataSets = new ArrayList<>();
+
         //Crear objeto de calendario
         Calendar c = Calendar.getInstance();
 
@@ -400,12 +431,22 @@ public class Consumption extends AppCompatActivity
         c.setTime(new Date());
 
         //Crear lista de "Entries"
-        List<BarEntry> mRegisters = new ArrayList<>();
+        List<Entry> mRegisters = new ArrayList<>();
 
         //Inicializar listas de datos
         for (int i = 0; i < datePointer.getDateRangeLength(); i++)
         {
-            mRegisters.add(new BarEntry(i, 0));
+            mRegisters.add(new Entry(i, 0));
+        }
+
+        //Si no es medicion de gas,
+        if (sensorType != MainActivity.GAS_IDX && registers.size() > 1)
+        {
+            //Obtener registro más bajo
+            Register lowerRegister = registers.get(registers.size() - 1);
+            referenceValue = Float.parseFloat(Constants.DOUBLE_FORMAT.format(lowerRegister.getValor()));
+            //Agregar registro más bajo
+            addDataToChartColumn(lowerRegister, mRegisters);
         }
 
         //Agregar datos obtenidos
@@ -415,12 +456,17 @@ public class Consumption extends AppCompatActivity
         }
 
         //Crear dataSet del tipo de producto y añadirlo a su lista
-        BarDataSet registersSet = new BarDataSet(mRegisters, "Consumo Gas");
+        LineDataSet registersSet = new LineDataSet(mRegisters, registersDesc);
         registersSet.setColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
+        registersSet.setLineWidth(5);
         registersSet.setValueTextColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
+        registersSet.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
+        dataSets.add(registersSet);
 
-        BarData data = new BarData(registersSet);
-        data.setBarWidth(0.9f);
+        LineData lineData = new LineData(dataSets);
+        lineData.setDrawValues(true);
+        lineData.setValueTextColor(R.color.colorPrimaryDark);
+        lineData.setValueTextSize(10f);
 
         ChartTimeAxisFormatter formatter = new ChartTimeAxisFormatter();
         formatter.setFormatData(chartXValuesArray);
@@ -437,15 +483,12 @@ public class Consumption extends AppCompatActivity
         YAxis right = chart.getAxisRight();
         right.setEnabled(false);
 
-        chart.setData(data);
-        chart.setFitBars(true);
+        chart.setData(lineData);
 
         Description description = new Description();
         description.setText("");
         chart.setDescription(description);
         chart.setLogEnabled(false);
-
-        setTotal();
         chart.animateY(ANIMATION_DELAY);
     }
 
@@ -453,6 +496,21 @@ public class Consumption extends AppCompatActivity
     {
         if (sensorType != MainActivity.GAS_IDX)
         {
+            if (registers.size() == 1)
+            {
+                totalTv.setVisibility(View.GONE);
+                referenceValue = 0f;
+                total = 0d;
+            }
+            else
+            {
+                Double valorFinal = (Double) registers.get(0).getValor();
+                Double valorInicial = (Double) registers.get(registers.size() - 1).getValor();
+
+                total = valorFinal - valorInicial;
+                referenceValue = (float) (valorInicial * 1.0f);
+            }
+
             String unit = "";
             if (sensorType == MainActivity.AGUA_IDX) unit = " L";
             else if (sensorType == MainActivity.ELEC_IDX) unit = " kW/h";
@@ -463,31 +521,30 @@ public class Consumption extends AppCompatActivity
         }
     }
 
-    private void addDataToChartColumn(Register register, List<BarEntry> registersEntries)
+    private void addDataToChartColumn(Register register, List<Entry> registersEntries)
     {
         int listIndex = getRegisterChartIndex(register);
 
-        BarEntry entry = registersEntries.get(listIndex);
+        Entry entry = registersEntries.get(listIndex);
         float lastValue = entry.getY();
 
-        if (sensorType == MainActivity.GAS_IDX)
+        if (lastValue == 0)
         {
-            if (lastValue == 0)
+            if (sensorType == MainActivity.GAS_IDX)
             {
                 //Si no se ha agregado un valor a esa columna, agregar
                 entry.setY(Float.parseFloat(register.getValor().toString()));
                 registersEntries.remove(listIndex);
                 registersEntries.add(listIndex, entry);
             }
-        }
-        else
-        {
-            float value = Float.parseFloat(Constants.DOUBLE_FORMAT.format(register.getValor()));
-            entry.setY(lastValue + value);
-            registersEntries.remove(listIndex);
-            registersEntries.add(listIndex, entry);
-
-            total += value;
+            else
+            {
+                float value = Float.parseFloat(Constants.DOUBLE_FORMAT.format(register.getValor()));
+                value = value - referenceValue;
+                entry.setY(value);
+                registersEntries.remove(listIndex);
+                registersEntries.add(listIndex, entry);
+            }
         }
     }
 
@@ -506,7 +563,9 @@ public class Consumption extends AppCompatActivity
         }
         else if (datePointer.getDateRangeType() == DatePointer.BYWEEK)
         {
-            return (calendar.get(Calendar.DAY_OF_WEEK)) - 1;
+            int idx = (calendar.get(Calendar.DAY_OF_WEEK)) - 1;
+            if (idx == 0) idx = 7;
+            return idx;
         }
         else
         {

@@ -89,6 +89,9 @@ public class DatePointer
 
             date = calendar;
             date.add(Calendar.DAY_OF_WEEK, 6);
+            date.set(Calendar.HOUR_OF_DAY, 23);
+            date.set(Calendar.MINUTE, 59);
+            date.set(Calendar.SECOND, 59);
 
             lastDayOfCurrentPeriod = date.getTime();
         }
@@ -115,12 +118,14 @@ public class DatePointer
 
     public long getFirstDateOfCurrentPeriodEpoch()
     {
-        return firstDayOfCurrentPeriod.getTime() / 1000;
+        long epoch = firstDayOfCurrentPeriod.getTime() / 1000;
+        return epoch;
     }
 
     public long getLastDateOfCurrentPeriodEpoch()
     {
-        return lastDayOfCurrentPeriod.getTime() / 1000;
+        long epoch = lastDayOfCurrentPeriod.getTime() / 1000;
+        return epoch;
     }
 
     public String getFirstDateOfCurrentPeriodString()
@@ -311,6 +316,7 @@ public class DatePointer
     public String[] getDaysOfTheWeek()
     {
         String[] daysOfTheWeek = new String[]{
+                " ",
                 "L ",
                 "M ",
                 "Mi ",
@@ -320,7 +326,7 @@ public class DatePointer
                 "D "
         };
 
-        for (int i = 0; i < 7; i++)
+        for (int i = 1; i < 8; i++)
         {
             Calendar day = Calendar.getInstance();
             day.setTime(firstDayOfCurrentPeriod);
@@ -333,8 +339,9 @@ public class DatePointer
 
     public String[] getDaysOfTheMonth()
     {
-        String[] daysOfTheMonth = new String[31];
-        for (int i = 0; i < 31; i++)
+        String[] daysOfTheMonth = new String[32];
+        daysOfTheMonth[0] = " ";
+        for (int i = 1; i < 32; i++)
         {
             daysOfTheMonth[i] = String.valueOf(i);
         }
@@ -350,11 +357,11 @@ public class DatePointer
         }
         else if (dateRangeType == BYWEEK)
         {
-            return 7;
+            return 8;
         }
         else
         {
-            int max = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+            int max = calendar.getActualMaximum(Calendar.DAY_OF_MONTH) + 1;
             return max;
         }
     }
