@@ -1,5 +1,6 @@
 package com.udg.monitorgea;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,12 +14,13 @@ public class MainActivity extends AppCompatActivity
     public static final int ELEC_IDX = 1;
     public static final int AGUA_IDX = 2;
 
+    private ProgressDialog progressDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         setClickListeners();
     }
 
@@ -33,7 +35,10 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
-                Intent gasIntent = new Intent(MainActivity.this, GasInfoActivity.class);
+                progressDialog = ProgressDialog.show(MainActivity.this, "", "Cargando...", true);
+
+                Intent gasIntent = new Intent(MainActivity.this, DetailActivity.class);
+                gasIntent.putExtra("element", GAS_IDX);
                 startActivity(gasIntent);
             }
         });
@@ -43,7 +48,11 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
+                progressDialog = ProgressDialog.show(MainActivity.this, "", "Cargando...", true);
 
+                Intent elecIntent = new Intent(MainActivity.this, DetailActivity.class);
+                elecIntent.putExtra("element", ELEC_IDX);
+                startActivity(elecIntent);
             }
         });
 
@@ -52,8 +61,25 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
+                progressDialog = ProgressDialog.show(MainActivity.this, "", "Cargando...", true);
 
+                Intent aguaIntent = new Intent(MainActivity.this, DetailActivity.class);
+                aguaIntent.putExtra("element", AGUA_IDX);
+                startActivity(aguaIntent);
             }
         });
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        if (progressDialog != null)
+        {
+            if (progressDialog.isShowing())
+            {
+                progressDialog.dismiss();
+            }
+        }
     }
 }
