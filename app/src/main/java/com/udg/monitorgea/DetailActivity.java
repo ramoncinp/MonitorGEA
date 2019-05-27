@@ -1,5 +1,6 @@
 package com.udg.monitorgea;
 
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -90,68 +91,6 @@ public class DetailActivity extends AppCompatActivity
         //Mostrar valores
         //initValues();
         setValues();
-    }
-
-    private void setHandler()
-    {
-        /*mHandler = new Handler();
-        mHandler.postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                currentValue--;
-                if (currentValue > 5)
-                {
-                    if (currentValue % 2 == 0)
-                    {
-                        values.add(new Entry(++chartIdx, currentValue));
-                        setValues();
-                    }
-                    mHandler.postDelayed(this, 400);
-                }
-            }
-        }, 400);*/
-    }
-
-    private void initValues()
-    {
-        if (energyIdx == MainActivity.GAS_IDX)
-        {
-            currentValue = 90;
-            for (chartIdx = 1; chartIdx <= 20; chartIdx++)
-            {
-                values.add(new Entry(chartIdx, currentValue));
-                if (chartIdx <= 8 || chartIdx > 12)
-                {
-                    currentValue--;
-                }
-            }
-        }
-        else if (energyIdx == MainActivity.ELEC_IDX)
-        {
-            currentValue = 1.3f;
-            for (chartIdx = 1; chartIdx <= 30; chartIdx++)
-            {
-                values.add(new Entry(chartIdx, currentValue));
-                if (chartIdx <= 8 || chartIdx > 16)
-                {
-                    currentValue += 2.32;
-                }
-            }
-        }
-        else if (energyIdx == MainActivity.AGUA_IDX)
-        {
-            currentValue = 0.43f;
-            for (chartIdx = 1; chartIdx <= 30; chartIdx++)
-            {
-                values.add(new Entry(chartIdx, currentValue));
-                if (chartIdx <= 8 || chartIdx > 16)
-                {
-                    currentValue += 1.69;
-                }
-            }
-        }
     }
 
     private void initViews()
@@ -273,7 +212,35 @@ public class DetailActivity extends AppCompatActivity
 
             case MainActivity.AGUA_IDX:
                 currentValueTv.setText(Constants.DOUBLE_FORMAT.format(currentValue) + " L");
-                currentAmountTv.setText("$" + Constants.DOUBLE_FORMAT.format(currentValue * 1.5));
+                //Calcular tarifa deacuerdo a litros
+                //De 0 a 6000 litros... $62.07
+                double waterAmount = 0;
+                if (currentValue > 0 && currentValue <= 6000)
+                {
+                    waterAmount = 62.07;
+                }
+                else if (currentValue > 6000 && currentValue <= 10000)
+                {
+                    waterAmount = 140.17;
+                }
+                else if (currentValue > 10000 && currentValue <= 14000)
+                {
+                    waterAmount = 219.27;
+                }
+                else if (currentValue > 14000 && currentValue <= 17000)
+                {
+                    waterAmount = 291.52;
+                }
+                else if (currentValue > 17000 && currentValue <= 20000)
+                {
+                    waterAmount = 363.77;
+                }
+                else if (currentValue > 20000 && currentValue <= 25000)
+                {
+                    waterAmount = 484.69;
+                }
+
+                currentAmountTv.setText("$" + Constants.DOUBLE_FORMAT.format(waterAmount));
                 break;
         }
     }
@@ -317,7 +284,21 @@ public class DetailActivity extends AppCompatActivity
                 {
                     referenceValue = 0f;
                 }
+            }
 
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError)
+            {
+                Log.e(TAG, databaseError.getMessage() + "\n" + databaseError.getDetails());
+            }
+        });
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
                 //Obtener registros
                 sensorRegisters = FirebaseDatabase.getInstance().getReference("registros/" + registersName);
                 sensorRegisters.addChildEventListener(new ChildEventListener()
@@ -371,45 +352,6 @@ public class DetailActivity extends AppCompatActivity
                     }
                 });
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError)
-            {
-                Log.e(TAG, databaseError.getMessage() + "\n" + databaseError.getDetails());
-            }
-        });
-
-        //Ejecutar Query
-        execQuery();
-    }
-
-    private void execQuery()
-    {
-        //Obtener fecha de inicio
-
-        //Crear query
-        /*Query query = sensorRegisters.orderByChild("fecha").startAt(datePointer.getFirstDateOfCurrentPeriodEpoch()).endAt(datePointer.getLastDateOfCurrentPeriodEpoch()).limitToLast(7);
-        query.addValueEventListener(new ValueEventListener()
-        {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot)
-            {
-                parseData(dataSnapshot);
-                Log.d(TAG, "Resultado de Query:");
-                Log.d(TAG, dataSnapshot.toString());
-
-                progressBar.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError)
-            {
-                Log.e(TAG, databaseError.getMessage() + "\n" + databaseError.getDetails());
-
-                noRgisters.setVisibility(View.VISIBLE);
-                content.setVisibility(View.GONE);
-                progressBar.setVisibility(View.GONE);
-            }
-        });*/
+        }, 500);
     }
 }
